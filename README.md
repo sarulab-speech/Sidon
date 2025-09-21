@@ -117,7 +117,7 @@ Sidon training runs in three sequential stages. Every invocation of
    ```bash
    uv run python -m sidon.train \
      model=sidon_vocoder_finetune \
-     data=preprocessed \
+     data=preprocessed_48k \
      model.cfg.ssl_model_name=/path/to/feature_predictor.ckpt \
      model.cfg.pretrain_path=/path/to/vocoder_pretrain.ckpt
    ```
