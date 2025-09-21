@@ -1,8 +1,7 @@
 # Sidon
 [![ArXiv](https://img.shields.io/badge/arXiv-coming%20soon-b31b1b.svg)](https://arxiv.org/abs/TODO)
-[![Gradio Demo](https://img.shields.io/badge/Gradio-demo%20coming%20soon-orange.svg)](https://gradio.live/TODO)
-[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-model%20coming%20soon-yellow.svg)](https://huggingface.co/TODO)
-[![Demo Page](https://img.shields.io/badge/Website-coming%20soon-blue.svg)](https://sidon.audio/TODO)
+[![Gradio Demo](https://img.shields.io/badge/Gradio-demo-orange.svg)](https://huggingface.co/spaces/sarulab-speech/sidon_demo_beta)
+[![Hugging Face](https://img.shields.io/badge/Hugging%20Face-demo)](https://huggingface.co/spaces/Wataru/SidonSamples)
 
 
 Large-scale text-to-speech (TTS) systems are bottlenecked by the scarcity of clean, multilingual recordings. Sidon tackles this by pairing a fast, open-source speech restoration model with reproducible tooling so researchers can turn noisy in-the-wild corpora into studio-quality datasets that scale across dozens of languages.
