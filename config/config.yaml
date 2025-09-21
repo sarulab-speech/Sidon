@@ -1,0 +1,7 @@
+defaults:
+  - data: preprocessed
+  - model: sidon_vocoder_pretrain
+  - train: default
+  - _self_
+
+seed: 42

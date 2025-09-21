@@ -1,0 +1,6 @@
+output_root: /groups/gag51394/users/nakata/shards_test
+writer_name: finetune
+train_num_writers: 1
+val_num_writers: 1
+shard_maxcount: 2000
+queue_size_per_worker: 40

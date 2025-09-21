@@ -1,0 +1,18 @@
+logger:
+  _target_: lightning.pytorch.loggers.TensorBoardLogger
+  save_dir: ${hydra:runtime.output_dir}/logs
+  name: train
+
+callbacks:
+  - _target_: lightning.pytorch.callbacks.LearningRateMonitor
+    logging_interval: step
+
+trainer:
+  max_steps: 100000
+  val_check_interval: 5000
+  log_every_n_steps: 100
+  precision: 32
+  enable_progress_bar: true
+
+ckpt_path: null
+compile: false

@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: sidon.train",
+      "type": "python",
+      "request": "launch",
+      "module": "sidon.train",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "cwd": "${workspaceFolder}",
+      "justMyCode": false,
+      "console": "integratedTerminal",
+      "env": {
+        "PYTHONPATH": "${workspaceFolder}/src:${env:PYTHONPATH}",
+        "HYDRA_FULL_ERROR": "1"
+      }
+    }
+  ]
+}

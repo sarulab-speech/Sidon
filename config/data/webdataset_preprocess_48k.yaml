@@ -1,0 +1,48 @@
+datamodule:
+  _target_: sidon.data.preprocess.WebDatasetDataModule
+  train_wds_patterns:
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/ja-JP/male/train_parallel/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/ja-JP/female/train_parallel/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/ja-JP/male/train_non_parallel/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/ja-JP/female/train_non_parallel/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/en-US/male/train_parallel/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/en-US/female/train_parallel/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/en-US/male/train_non_parallel/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/en-US/female/train_non_parallel/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/en-US/male/timit_non_parallel/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/en-US/female/timit_non_parallel/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/akuapem-twi/train/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/asante-twi/train/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/ewe/train/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/hausa/train/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/lingala/train/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/yoruba/train/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/ears/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/expresso/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/jsut_ver1.1/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/vctk/
+  val_wds_patterns:
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/ja-JP/male/dev/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/ja-JP/female/dev/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/en-US/male/dev/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/hifi-captain/en-US/female/dev/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/akuapem-twi/dev/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/asante-twi/dev/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/ewe/dev/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/hausa/dev/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/lingala/dev/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/bibleTTS/yoruba/dev/
+  batch_size: 1
+  sampling_rate: 48000
+  ssl_model_name: facebook/w2v-bert-2.0
+  speaker_ssl_model_name: microsoft/wavlm-base-plus-sv
+  use_noise: true
+  max_duration: 20.0
+  merge_samples: true
+  train_num_workers: 32
+  val_num_workers: 8
+  noise_path:
+    - /groups/gag51394/users/nakata/urgent24/noise/
+  use_pra: true
+  n_repeats: 1
+  split_by_worker: true

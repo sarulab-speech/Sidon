@@ -1,0 +1,14 @@
+datamodule:
+  _target_: sidon.data.PreprocessedDataModule
+  train_urls:
+    - /groups/gag51394/users/nakata/shards_48k/pretrain/train #paths for 24k datasets
+    - /groups/gag51394/users/nakata/shards_48k/finetune/train # paths for 48k datasets
+  val_urls:
+    - /groups/gag51394/users/nakata/shards_48k/pretrain/valid # paths for 24k datasets
+    - /groups/gag51394/users/nakata/shards_48k/finetune/train # paths for 48k datasets
+  batch_size: 2
+  val_batch_size: 2
+  train_num_workers: 8
+  val_num_workers: 8
+  preprocessed: true
+  is_s3: false

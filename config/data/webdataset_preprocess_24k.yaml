@@ -1,0 +1,26 @@
+datamodule:
+  _target_: sidon.data.preprocess.WebDatasetDataModule
+  train_wds_patterns:
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/jvs_ver1/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/libritts_r/train-clean-100/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/libritts_r/train-clean-360/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/libritts_r/train-other-360/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/flerus_r/train/
+  val_wds_patterns:
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/libritts_r/dev-clean/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/libritts_r/dev-other/
+    - /groups/gag51394/users/nakata/dataset_wds/yodasr/flerus_r/dev/
+  batch_size: 1
+  sampling_rate: 48000
+  ssl_model_name: facebook/w2v-bert-2.0
+  speaker_ssl_model_name: microsoft/wavlm-base-plus-sv
+  use_noise: true
+  max_duration: 20.0
+  merge_samples: true
+  train_num_workers: 32
+  val_num_workers: 8
+  noise_path:
+    - /groups/gag51394/users/nakata/urgent24/noise/
+  use_pra: true
+  n_repeats: 1
+  split_by_worker: true

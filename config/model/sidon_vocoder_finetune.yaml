@@ -1,0 +1,48 @@
+lightning_module:
+  _target_: sidon.model.SidonLightningModule
+  _recursive_: false
+
+cfg:
+  ssl_model_name: # path to feature predictor checkpoint
+  sample_rate: 24000
+  pretraining: false
+
+
+  vocos:
+    dim: 1024
+    intermediate_dim: 1536
+    n_layers: 8
+    n_fft: 1920
+    hop_length: 480
+
+  dac_loss:
+    stft_loss:
+      window_lengths: [2048, 512]
+    mel_loss:
+      n_mels: [5, 10, 20, 40, 80, 160, 320]
+      window_lengths: [32, 64, 128, 256, 512, 1024, 2048]
+      mel_fmin: [0, 0, 0, 0, 0, 0, 0]
+      mel_fmax: [null, null, null, null, null, null, null]
+      pow: 1.0
+      clamp_eps: 1.0e-5
+      mag_weight: 0.0
+
+  loss:
+    loss_weight:
+      regression_loss: 15.0
+      discriminator_loss: 1.0
+      ssl_loss: 1.0
+      adv_gen: 2.0
+      adv_feature: 1.0
+
+  optim:
+    lr: 0.0001
+    weight_decay: 0.01
+
+  scheduler:
+    generator:
+      _target_: torch.optim.lr_scheduler.ExponentialLR
+      gamma: 0.999996
+    discriminator:
+      _target_: torch.optim.lr_scheduler.ExponentialLR
+      gamma: 0.999996

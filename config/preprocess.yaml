@@ -1,0 +1,6 @@
+defaults:
+  - data: webdataset_preprocess_48k
+  - preprocess: default
+  - _self_
+
+seed: null
