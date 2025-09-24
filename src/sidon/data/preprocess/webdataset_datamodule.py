@@ -8,7 +8,7 @@ import webdataset as wds
 from lightning.pytorch import LightningDataModule
 from transformers import AutoFeatureExtractor
 
-from .datamodule import random_crop, torch_audio
+from ..datamodule import random_crop, torch_audio
 from .functional_degrations import (
     add_non_parametric_noise,
     band_limit,

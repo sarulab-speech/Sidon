@@ -1,6 +1,8 @@
 """Data module implementations for Sidon."""
-
 from __future__ import annotations
+
+import random
+
 
 import os
 import re
@@ -52,6 +54,32 @@ def get_urls(path: Sequence[str] | str) -> list[str]:
     return urls
 
 
+def random_crop(samples, n_crops, seconds, input_key=None):
+    for sample in samples:
+        if input_key is None:
+            audio_key = [k for k in sample.keys() if "audio" in k][0]
+        else:
+            audio_key = input_key
+        wav, sr = sample[audio_key]
+        if wav.shape[0] > 1:
+            wav = wav[0, None, :]  # if stereo, take only one channel
+        wav = wav.view(1, -1)
+        duration = wav.size(1) / sr
+        n_crops = int(max(min(duration / n_crops, n_crops), 1))
+        for i in range(n_crops):
+            start = random.randint(  # noqa: S311
+                0,
+                max(0, wav.size(1) - int(sr * seconds)),
+            )
+            cropped = wav[
+                :,
+                start : start + round(sr * seconds),
+            ].squeeze(0)
+            new_sample = sample.copy()
+            new_sample[audio_key] = (cropped, sr)
+            yield new_sample
+
+
 class PreprocessedDataModule(LightningDataModule):
     """Loads preprocessed torch tensors packaged as WebDataset shards."""
 
@@ -78,7 +106,6 @@ class PreprocessedDataModule(LightningDataModule):
         self.train_num_workers = train_num_workers
         self.val_num_workers = val_num_workers
         self.val_batch_size = val_batch_size
-
 
     def setup(self, stage: str | None = None) -> None:
         self.train_dataset = (
@@ -171,8 +198,7 @@ class PreprocessedDataModule(LightningDataModule):
                 for key, value in tensors.items():
                     noisy_ssl_inputs[key].append(value[0])
             output_sample["noisy_ssl_inputs"] = {
-                key: torch.stack(stack)
-                for key, stack in noisy_ssl_inputs.items()
+                key: torch.stack(stack) for key, stack in noisy_ssl_inputs.items()
             }
         else:
             output_sample["noisy_ssl_inputs"] = {}
