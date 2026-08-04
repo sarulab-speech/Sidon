@@ -1,17 +1,21 @@
 """Data module implementations for Sidon."""
 from __future__ import annotations
 
+import importlib
 import io
 import os
 import random
 import re
+import shlex
 from pathlib import Path
 from typing import Any, Dict, Iterable, Sequence
+from urllib.parse import urlsplit
 
 import torch
 import torchaudio
-import webdataset as wds
 from lightning.pytorch import LightningDataModule
+
+wds = importlib.import_module("webdataset")
 
 
 def torch_audio(key: str, data: bytes):
@@ -42,9 +46,23 @@ def get_urls(path: Sequence[str] | str) -> list[str]:
     urls: list[str] = []
     for entry in path:
         with Path(entry).open("r", encoding="utf-8") as file_handle:
-            for line in file_handle.read().splitlines():
+            for line_number, line in enumerate(file_handle.read().splitlines(), start=1):
+                uri = line.strip()
+                parsed = urlsplit(uri)
+                if (
+                    parsed.scheme != "s3"
+                    or not parsed.netloc
+                    or parsed.path in {"", "/"}
+                    or parsed.query
+                    or parsed.fragment
+                    or any(ord(character) < 32 or ord(character) == 127 for character in uri)
+                ):
+                    raise ValueError(
+                        f"invalid S3 URI in {entry} at line {line_number}: {uri!r}"
+                    )
                 urls.append(
-                    f"pipe:aws --endpoint-url https://s3ds.mdx.jp s3 cp {line} -"
+                    "pipe:aws --endpoint-url https://s3ds.mdx.jp s3 cp "
+                    f"{shlex.quote(uri)} -"
                 )
     return urls
 
@@ -79,7 +97,7 @@ def _contains_nan(value: Any) -> bool:
     """Recursively inspect tensors nested in mappings/sequences for NaNs."""
     if isinstance(value, torch.Tensor):
         if value.is_floating_point() or torch.is_complex(value):
-            return torch.isnan(value).any().item()
+            return bool(torch.isnan(value).any().item())
         return False
     if isinstance(value, dict):
         return any(_contains_nan(v) for v in value.values())
@@ -165,7 +183,7 @@ class PreprocessedDataModule(LightningDataModule):
             .batched(self.val_batch_size, collation_fn=self.collate_fn)
         )
 
-    def train_dataloader(self) -> wds.WebLoader:
+    def train_dataloader(self) -> Any:
         return wds.WebLoader(
             self.train_dataset,
             num_workers=self.train_num_workers,
@@ -175,7 +193,7 @@ class PreprocessedDataModule(LightningDataModule):
             drop_last=True,
         )
 
-    def val_dataloader(self) -> wds.WebLoader:
+    def val_dataloader(self) -> Any:
         return wds.WebLoader(
             self.val_dataset,
             num_workers=self.val_num_workers,
