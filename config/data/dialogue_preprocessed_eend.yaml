@@ -1,0 +1,14 @@
+datamodule:
+  _target_: sidon.data.preprocess.preprocessed_dialogue_datamodule.PreprocessedDialogueDataModule
+  train_urls: []
+  val_urls: []
+  batch_size: 2
+  val_batch_size: 2
+  train_num_workers: 0
+  val_num_workers: 0
+  preprocessed: true
+  is_s3: false
+  required_sample_rate: 24000
+  expected_duration_seconds: 20
+  required_input_channels: 2
+  require_noisy_16k_mixture: true
