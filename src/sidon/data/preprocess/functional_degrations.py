@@ -47,8 +47,10 @@ def packet_loss(
     loss_rate: float = 0.1,
 ) -> dict[str, Any]:
     x, sr = sample[input_key]
+    # Mask a copy: "noisy" can share storage with the clean target (rename_audio
+    # maps both keys to one tensor), so masking in place would also zero "clean".
     # Randomly mask 10% of the audio with chunks of length 0.1 to 0.5 seconds
-    x = x.view(1, -1)
+    x = x.reshape(1, -1).clone()
     total_duration = x.size(1) / sr
     num_chunks = int(total_duration * 3 / 10)  # 10% of the total duration
 
