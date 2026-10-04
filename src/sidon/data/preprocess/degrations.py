@@ -77,6 +77,8 @@ class DegrationApply:
         self.rir_ds = iter(rir_source)
 
     def packet_loss(self, x: torch.Tensor, sr):
+        # Mask a copy so the caller's tensor (possibly the clean target) is unchanged.
+        x = x.clone()
         # Randomly mask 10% of the audio with chunks of length 0.1 to 0.5 seconds
         total_duration = x.size(1) / sr
         num_chunks = int(total_duration * 3 / 10)  # 10% of the total duration
