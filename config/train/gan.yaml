@@ -1,0 +1,13 @@
+# Trainer settings for the manual-optimization GAN stages (vocoder
+# pretraining/finetuning, SSL-VAE, decoder finetuning). Same as default except:
+defaults:
+  - default
+  - _self_
+
+trainer:
+  # Not supported with manual optimization; the modules clip their own gradients.
+  gradient_clip_val: null
+  strategy:
+    # Two manual_backward calls per batch: with static_graph=true DDP never
+    # all-reduces their gradients, so every rank would train its own copy.
+    static_graph: false

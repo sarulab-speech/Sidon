@@ -114,7 +114,8 @@ Sidon training runs in three sequential stages. Every invocation of
    ```bash
    uv run python -m sidon.train \
      model=sidon_vocoder_pretrain \
-     data=preprocessed
+     data=preprocessed \
+     train=gan
    ```
 
    Capture the checkpoint path; it will be referenced as `model.cfg.pretrain_path`
@@ -127,12 +128,16 @@ Sidon training runs in three sequential stages. Every invocation of
    uv run python -m sidon.train \
      model=sidon_vocoder_finetune \
      data=preprocessed_48k \
+     train=gan \
      model.cfg.ssl_model_name=/path/to/feature_predictor.ckpt \
      model.cfg.pretrain_path=/path/to/vocoder_pretrain.ckpt
    ```
 
 Adjust optimiser, scheduler, or trainer parameters via the files in
 `config/model/` and `config/train/`, and use `train.ckpt_path` to resume a run.
+The GAN stages (vocoder pretraining/finetuning, SSL-VAE) use manual
+optimization and must run with `train=gan`: under DDP, the `static_graph: true`
+of `train=default` would leave their gradients unsynchronized across GPUs.
 
 ## DialogueSidon — diffusion-based dialogue separation
 
@@ -190,7 +195,8 @@ run via `model.cfg.vae_checkpoint_path`.
    ```bash
    uv run python -m sidon.train \
      model=ssl_vae \
-     data=dialogue_preprocessed
+     data=dialogue_preprocessed \
+     train=gan
    ```
 
 2. **Diffusion training** — point `model.cfg.vae_checkpoint_path` at the

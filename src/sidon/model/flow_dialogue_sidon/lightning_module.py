@@ -14,6 +14,7 @@ from torch import nn
 
 import audiotools
 import dac
+from sidon.model.gan_ddp import check_ddp_syncs_manual_backward, ghost_loss
 from sidon.model.losses import DACLoss, GANLoss
 from sidon.model.dialogue_sidion.audio import extract_seamless_m4t_features
 
@@ -55,6 +56,9 @@ class SSLVAE(LightningModule):
             num_hidden_layers=cfg.ssl_num_hidden_layers,
             layerdrop=0.0
         ).eval()
+        # Frozen encoder: it runs under inference_mode and no optimizer updates
+        # it. Under DDP every parameter that requires grad must get a gradient.
+        self.ssl_model.requires_grad_(False)
         self.bottleneck = VAEBottleneck(cfg.vae)
 
         self.decoder = dac.model.dac.Decoder(
@@ -71,6 +75,7 @@ class SSLVAE(LightningModule):
         self.cfg = cfg
     def on_fit_start(self):
         torch.set_float32_matmul_precision('medium')
+        check_ddp_syncs_manual_backward(self)
     
     def encode(self, ssl_inputs):
         with torch.inference_mode():
@@ -119,7 +124,15 @@ class SSLVAE(LightningModule):
         )
         if stage == "train":
             opt_d.zero_grad()
-            self.manual_backward(discriminator_loss)  # type: ignore
+            # The ghost term lets DDP see the generator in this backward.
+            self.manual_backward(
+                discriminator_loss
+                + ghost_loss(
+                    itertools.chain(
+                        self.bottleneck.parameters(), self.decoder.parameters()
+                    )
+                )
+            )
             torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
             opt_d.step()
             sch_d.step()  # type: ignore
