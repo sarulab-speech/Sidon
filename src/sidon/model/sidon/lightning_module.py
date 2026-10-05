@@ -14,6 +14,7 @@ from lightning.pytorch import loggers
 from omegaconf import DictConfig
 from peft import LoraConfig, inject_adapter_in_model
 
+from sidon.model.gan_ddp import check_ddp_syncs_manual_backward, ghost_loss
 from sidon.model.losses import DACLoss, GANLoss
 
 
@@ -114,6 +115,9 @@ class SidonLightningModule(LightningModule):
                     map_location=self.device,
                 ).student_ssl_model.eval()
             )
+        # Frozen encoder: it runs under no_grad and no optimizer updates it.
+        # Under DDP every parameter that requires grad must get a gradient.
+        self.student_ssl_model.requires_grad_(False)
 
         if not cfg.pretraining:
             pretrained = SidonLightningModule.load_from_checkpoint(
@@ -137,6 +141,7 @@ class SidonLightningModule(LightningModule):
 
     def on_fit_start(self) -> None:
         torch.set_float32_matmul_precision("medium")
+        check_ddp_syncs_manual_backward(self)
 
     def step(
         self, batch, batch_idx: int, stage: str = "train"
@@ -180,7 +185,10 @@ class SidonLightningModule(LightningModule):
         )
         if stage == "train":
             opt_d.zero_grad()
-            self.manual_backward(discriminator_loss)  # type: ignore
+            # The ghost term lets DDP see the decoder in this backward.
+            self.manual_backward(
+                discriminator_loss + ghost_loss(self.decoder.parameters())
+            )
             torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
             opt_d.step()
             sch_d.step()  # type: ignore

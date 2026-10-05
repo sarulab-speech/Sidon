@@ -20,6 +20,7 @@ from sidon.model.dialogue_sidion.lightning_module import (
     DialogueSidonNoVaeLatentLayer8LightningModule,
     DialogueSidonNoVaeLatentWithDiffusionHeadLightningModule,
 )
+from sidon.model.gan_ddp import check_ddp_syncs_manual_backward, ghost_loss
 from sidon.model.losses import DACLoss, GANLoss
 
 
@@ -125,6 +126,7 @@ class DialogueSidonDacDecoderFinetuneLightningModule(LightningModule):
     def on_fit_start(self) -> None:
         torch.set_float32_matmul_precision("medium")
         self.predictor.eval()
+        check_ddp_syncs_manual_backward(self)
 
     @staticmethod
     def _align_predicted_speakers(predicted: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -307,7 +309,10 @@ class DialogueSidonDacDecoderFinetuneLightningModule(LightningModule):
         )
         if stage == "train":
             opt_d.zero_grad()
-            self.manual_backward(discriminator_loss)
+            # The ghost term lets DDP see the generator in this backward.
+            self.manual_backward(
+                discriminator_loss + ghost_loss(self._generator_parameters())
+            )
             torch.nn.utils.clip_grad_norm_(self.discriminator.parameters(), self.grad_clip_norm)
             opt_d.step()
             sch_d.step()

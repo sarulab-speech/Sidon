@@ -43,7 +43,7 @@ mpirun  \
   data=dialogue_preprocessed \
   data.datamodule.batch_size=4 \
   model=ssl_vae \
-  train=default \
+  train=gan \
   train.trainer.gradient_clip_val=null \
   train.trainer.precision=bf16-mixed \
   hydra.run.dir=./sidon_runs/${PBS_JOBID} \

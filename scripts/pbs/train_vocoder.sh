@@ -25,6 +25,6 @@ uv run python src/sidon/train.py \
   data=preprocessed_48k \
   data.datamodule.batch_size=4 \
   model=sidon_vocoder_pretrain \
-  train=default \
+  train=gan \
   train.trainer.gradient_clip_val=null \
   hydra.run.dir=/groups/gag51394/users/nakata/sidon_runs/${PBS_JOBID}

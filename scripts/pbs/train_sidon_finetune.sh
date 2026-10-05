@@ -27,6 +27,6 @@ uv run python src/sidon/train.py \
   model=sidon_vocoder_finetune \
   "model.cfg.ssl_model_name='/home/acc12576tt/github.com/Sidon/sidon/t2h90k5j/checkpoints/epoch=13-step=388305.ckpt'" \
   "model.cfg.pretrain_path='/home/acc12576tt/github.com/Sidon/sidon/60n5ebis/checkpoints/epoch=2-step=366468.ckpt'" \
-  train=default \
+  train=gan \
   train.trainer.gradient_clip_val=null \
   hydra.run.dir=/groups/gag51394/users/nakata/sidon_runs/${PBS_JOBID}

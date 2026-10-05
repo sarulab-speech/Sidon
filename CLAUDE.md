@@ -23,10 +23,10 @@ The project uses `uv` for dependency management (Python 3.10+, PyTorch 2.6+, CUD
 uv run python -m sidon.train model=sidon_feature_predictor data=preprocessed
 
 # Vocoder pretraining (stage 2)
-uv run python -m sidon.train model=sidon_vocoder_pretrain data=preprocessed
+uv run python -m sidon.train model=sidon_vocoder_pretrain data=preprocessed train=gan
 
 # Vocoder finetuning (stage 3)
-uv run python -m sidon.train model=sidon_vocoder_finetune data=preprocessed_48k \
+uv run python -m sidon.train model=sidon_vocoder_finetune data=preprocessed_48k train=gan \
   model.cfg.ssl_model_name=/path/to/feature_predictor.ckpt \
   model.cfg.pretrain_path=/path/to/vocoder_pretrain.ckpt
 
