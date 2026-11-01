@@ -4714,11 +4714,8 @@ dependencies = [
     { name = "datasets" },
     { name = "descript-audio-codec" },
     { name = "diffusers" },
-    { name = "flash-attn" },
-    { name = "flow-matching" },
     { name = "hydra-core" },
     { name = "lightning" },
-    { name = "mmdit" },
     { name = "peft" },
     { name = "pyroomacoustics" },
     { name = "ray", extra = ["data"] },
@@ -4733,6 +4730,13 @@ dependencies = [
     { name = "webdataset" },
 ]
 
+[package.optional-dependencies]
+geneses = [
+    { name = "flash-attn" },
+    { name = "flow-matching" },
+    { name = "mmdit" },
+]
+
 [package.dev-dependencies]
 dev = [
     { name = "ipykernel" },
@@ -4744,11 +4748,11 @@ requires-dist = [
     { name = "datasets", specifier = "==2.17.1" },
     { name = "descript-audio-codec", specifier = ">=1.0.0" },
     { name = "diffusers", specifier = ">=0.36.0" },
-    { name = "flash-attn", specifier = ">=2.8.3" },
-    { name = "flow-matching", specifier = ">=1.0.10" },
+    { name = "flash-attn", marker = "extra == 'geneses'", specifier = ">=2.8.3" },
+    { name = "flow-matching", marker = "extra == 'geneses'", specifier = ">=1.0.10" },
     { name = "hydra-core", specifier = ">=1.3.2" },
     { name = "lightning", specifier = ">=2.5.5" },
-    { name = "mmdit", specifier = ">=0.3.0" },
+    { name = "mmdit", marker = "extra == 'geneses'", specifier = ">=0.3.0" },
     { name = "peft", specifier = ">=0.16.0" },
     { name = "pyroomacoustics" },
     { name = "ray", extras = ["data"], specifier = ">=2.9.0" },
@@ -4762,6 +4766,7 @@ requires-dist = [
     { name = "wandb", specifier = ">=0.18.7" },
     { name = "webdataset", specifier = ">=0.2.100" },
 ]
+provides-extras = ["geneses"]
 
 [package.metadata.requires-dev]
 dev = [

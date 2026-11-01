@@ -25,14 +25,37 @@ This repository ships two models:
 - `uv` for dependency management (or an equivalent toolchain you are
   comfortable with)
 
-Install project dependencies:
+Install the default project dependencies for Sidon and DialogueSidon:
 
 ```bash
 uv sync
 ```
 
+The experimental GENESES separator uses additional packages. Install them only
+when running `infer_geneses.py` or `model=geneses_dialogue`:
+
+```bash
+uv sync --extra geneses
+```
+
 If you rely on a different environment manager, replicate the dependencies
-listed in `pyproject.toml`.
+listed in `pyproject.toml` (including the `geneses` extra only if needed).
+
+## License scope
+
+The repository's [MIT license](LICENSE) covers the project code. Dependencies
+have their own licenses; installing Sidon does not change those terms. In
+particular, the optional `flow-matching` package used by GENESES is published
+under [CC BY-NC 4.0](https://github.com/facebookresearch/flow_matching/blob/main/LICENSE).
+For version 1.0.10, its [PyPI metadata](https://pypi.org/project/flow-matching/1.0.10/)
+also lists an MIT classifier, which conflicts with the license included in
+the source distribution. Do not infer its license from that classifier alone.
+
+Published checkpoints have separate model-card licenses:
+[Sidon v0.1](https://huggingface.co/sarulab-speech/sidon-v0.1) is marked MIT,
+while [DialogueSidon](https://huggingface.co/sarulab-speech/DialogueSidon) is
+marked CC BY-NC 4.0. Check the license of the specific checkpoint and all
+dependencies used in a deployment.
 
 ## Repository layout
 
