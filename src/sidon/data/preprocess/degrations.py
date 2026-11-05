@@ -5,23 +5,48 @@ import torch
 import torchaudio
 
 
-# align two waveforms by padding the shorter one based on mse
+# align the codec output to the original waveform; always returns a tensor of
+# the original's length so clean/noisy stay the same length and time-aligned
 def align_codec_waveform(original: torch.Tensor, codec_applied: torch.Tensor):
     if original.size(1) == codec_applied.size(1):
         return codec_applied
-    else:
-        # find an index which minimizes the mse
-        if original.size(1) < codec_applied.size(1):
-            return codec_applied[:, : original.size(1)]
+    if original.size(1) < codec_applied.size(1):
+        # codec output is longer (e.g. encoder delay padding): keep the slice
+        # that minimizes the mse against the original
         mse = []
-        for i in range(original.size(1) - codec_applied.size(1) + 1):
+        for i in range(codec_applied.size(1) - original.size(1) + 1):
             mse.append(
                 torch.mean(
-                    (original[:, i : i + codec_applied.size(1)] - codec_applied) ** 2
+                    (codec_applied[:, i : i + original.size(1)] - original) ** 2
                 )
             )
-        start_index = torch.argmin(torch.tensor(mse)).item()
+        start_index = int(torch.argmin(torch.tensor(mse)))
         return codec_applied[:, start_index : start_index + original.size(1)]
+    # codec output is shorter: place it at the offset that minimizes the mse
+    # and zero-pad the rest so the content keeps the original's timing
+    mse = []
+    for i in range(original.size(1) - codec_applied.size(1) + 1):
+        mse.append(
+            torch.mean(
+                (original[:, i : i + codec_applied.size(1)] - codec_applied) ** 2
+            )
+        )
+    start_index = int(torch.argmin(torch.tensor(mse)))
+    aligned = codec_applied.new_zeros(codec_applied.size(0), original.size(1))
+    aligned[:, start_index : start_index + codec_applied.size(1)] = codec_applied
+    return aligned
+
+
+# resample's ceil rounding can change the length by a few samples; when samples
+# are later concatenated (merge_samples_to_target_length) the difference
+# accumulates into a clean/noisy time drift, so force outputs back to the
+# reference length
+def match_length(x: torch.Tensor, length: int) -> torch.Tensor:
+    if x.size(1) > length:
+        return x[:, :length]
+    if x.size(1) < length:
+        return torch.nn.functional.pad(x, (0, length - x.size(1)))
+    return x
 
 
 class DegrationApply:
@@ -120,7 +145,8 @@ class DegrationApply:
     def band_limit(self, x: torch.Tensor, sr: int):
         target_sr = random.sample(self.downsample_sr, 1)[0]
         down_sampled = torchaudio.functional.resample(x, sr, target_sr)
-        return torchaudio.functional.resample(down_sampled, target_sr, sr)
+        up_sampled = torchaudio.functional.resample(down_sampled, target_sr, sr)
+        return match_length(up_sampled, x.size(1))
 
     def codec(self, x: torch.Tensor, sr: int):
         effector = random.sample(self.codec_effector, 1)[0]

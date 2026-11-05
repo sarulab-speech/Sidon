@@ -7,7 +7,7 @@ import torchaudio
 
 from .rir_utils import estimate_early_rir
 
-from .degrations import align_codec_waveform, clipping
+from .degrations import align_codec_waveform, clipping, match_length
 
 
 @torch.inference_mode()
@@ -77,11 +77,9 @@ def band_limit(
     x = x.view(1, -1)
     target_sr = random.sample(candidate_srs, 1)[0]
     down_sampled = torchaudio.functional.resample(x, sr, target_sr)
+    up_sampled = torchaudio.functional.resample(down_sampled, target_sr, sr)
     new_sample = sample.copy()
-    new_sample[output_key] = (
-        torchaudio.functional.resample(down_sampled, target_sr, sr),
-        sr,
-    )
+    new_sample[output_key] = (match_length(up_sampled, x.size(1)), sr)
     assert x.ndim == 2
     return new_sample
 
