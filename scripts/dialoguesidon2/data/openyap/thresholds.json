@@ -1,0 +1,15 @@
+{
+ "thresholds": {
+  "track_prominence": 0.045,
+  "track_blr_db": -42.0,
+  "track_exc_db": 6.0,
+  "window_blr_db": -35.0,
+  "window_exc_db": 3.0,
+  "window_zero_runs_max": 0,
+  "window_clip_runs_max": 300,
+  "s2_window_blr_db": -30.0,
+  "s2_window_exc_db": 3.0,
+  "window_zero_runs_gated_max": 1000000000
+ },
+ "fallback_drop_aec_off": false
+}

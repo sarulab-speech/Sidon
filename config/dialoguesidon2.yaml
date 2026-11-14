@@ -1,0 +1,25 @@
+# DialogueSidon2 (python -m sidon.dialoguesidon2.train / .statistics). The defaults train the separation model
+# (stage 2); stage 1 (the SSL-VAE) uses model=dialoguesidon2_ssl_vae data=dialoguesidon2_ssl_vae
+# train=dialoguesidon2_ssl_vae. See scripts/dialoguesidon2/ for the launch commands of every step.
+defaults:
+  - data: dialoguesidon2
+  - model: dialoguesidon2
+  - train: dialoguesidon2
+  - _self_
+
+seed: 42
+
+# Latent statistics of a trained SSL-VAE (python -m sidon.dialoguesidon2.statistics), computed as for the released
+# model: posterior draws of both clean speakers of 10 s dialogue segments, 1000 batches of 12, bf16 autocast.
+statistics:
+  vae_checkpoint: ???  # the SSL-VAE stage checkpoint (stage 1 final.ckpt)
+  train_urls: ???  # dialogue shard directories (the separation training data, or part of it)
+  output: ???  # where to write the statistics file (model.cfg.statistics_path of stage 2)
+  segment_seconds: 10
+  batch_size: 12
+  num_workers: 0  # keeps the reading order independent of the worker count
+  max_batches: 1000
+  device: cuda
+  precision: bf16-mixed
+  sample_posterior: true  # statistics of posterior draws, the separation targets
+  efficient_ssl_attention: true

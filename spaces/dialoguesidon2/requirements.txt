@@ -1,0 +1,6 @@
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.8.0
+torchaudio==2.8.0
+gradio>=4.0.0
+huggingface_hub>=0.24.0
+numpy
