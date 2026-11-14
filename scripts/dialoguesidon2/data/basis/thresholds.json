@@ -1,0 +1,30 @@
+{
+ "thresholds": {
+  "track_prominence": 0.07,
+  "track_blr_db": -25.0,
+  "track_exc_db": 6.0,
+  "track_lag_s": [-0.1, 2.0],
+  "track_level_mode": "or",
+  "track_colocated_prominence": 0.3,
+  "track_colocated_lag_s": 0.1,
+  "window_blr_db": -35.0,
+  "window_exc_db": 3.0,
+  "window_pooled": false,
+  "window_lag_s": [-0.1, 2.0],
+  "window_prominence": 0.07,
+  "window_zero_runs_max": 0,
+  "window_zero_runs_gated_max": 1000000000,
+  "window_clip_runs_max": null,
+  "window_clip_share_max": 0.005,
+  "gate_runs_per_hour_min": 100.0,
+  "dnsmos_track_min": null,
+  "dnsmos_window_min": null,
+  "dnsmos_clip_coverage": 0.25,
+  "dnsmos_min_clips": 3,
+  "floor_max_db": -56.078125,
+  "s2_window_blr_db": -30.0,
+  "s2_window_exc_db": 3.0
+ },
+ "fallback_no_excluded_on_call": false,
+ "s2_controls": "report"
+}
