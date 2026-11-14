@@ -3,6 +3,7 @@
 [![DialogueSidon arXiv](https://img.shields.io/badge/DialogueSidon-arXiv%202604.09344-b31b1b.svg)](https://arxiv.org/abs/2604.09344)
 [![Sidon Gradio Demo](https://img.shields.io/badge/Sidon-Gradio%20demo-orange.svg)](https://huggingface.co/spaces/sarulab-speech/sidon_demo_beta)
 [![DialogueSidon Gradio Demo](https://img.shields.io/badge/DialogueSidon-Gradio%20demo-orange.svg)](https://huggingface.co/spaces/sarulab-speech/DialogueSidon-demo)
+[![DialogueSidon2 Gradio Demo](https://img.shields.io/badge/DialogueSidon2-Gradio%20demo-orange.svg)](https://huggingface.co/spaces/sarulab-speech/DialogueSidon2-demo)
 [![Hugging Face](https://img.shields.io/badge/Hugging%20Face-demo)](https://huggingface.co/spaces/Wataru/SidonSamples)
 
 
@@ -10,13 +11,16 @@ Large-scale text-to-speech (TTS) systems are bottlenecked by the scarcity of cle
 
 Sidon consists of two stages: a w2v-BERT 2.0 feature predictor finetuned to cleanse representations from degraded speech, and a vocoder trained to synthesise restored waveforms from those features. The stack achieves restoration quality comparable to Miipher—Google's internal speech restoration pipeline—while running up to 500× faster than real time on a single GPU. We also observe that training downstream TTS models on Sidon-cleansed automatic speech recognition corpora improves zero-shot synthesis quality. This repository releases the code, configs, and models needed to reproduce Sidon's dataset cleansing workflow for the community.
 
-This repository ships two models:
+This repository ships three models:
 
 - **Sidon** ([arXiv:2509.17052](https://arxiv.org/abs/2509.17052)) — the
   single-speaker speech restoration pipeline described above.
 - **DialogueSidon** ([arXiv:2604.09344](https://arxiv.org/abs/2604.09344)) — a
   diffusion-based two-speaker dialogue separator that reuses the Sidon
   backbone. See the [DialogueSidon section](#dialoguesidon--diffusion-based-dialogue-separation).
+- **DialogueSidon2** — a two-speaker dialogue separator and restorer that reads
+  both speakers' SSL-VAE latents directly from the mixture in one forward pass.
+  See the [DialogueSidon2 section](#dialoguesidon2--direct-readout-dialogue-separation).
 
 ## Requirements
 
@@ -53,7 +57,8 @@ the source distribution. Do not infer its license from that classifier alone.
 
 Published checkpoints have separate model-card licenses:
 [Sidon v0.1](https://huggingface.co/sarulab-speech/sidon-v0.1) is marked MIT,
-while [DialogueSidon](https://huggingface.co/sarulab-speech/DialogueSidon) is
+while [DialogueSidon](https://huggingface.co/sarulab-speech/DialogueSidon) and
+[DialogueSidon2](https://huggingface.co/sarulab-speech/DialogueSidon2) are
 marked CC BY-NC 4.0. Check the license of the specific checkpoint and all
 dependencies used in a deployment.
 
@@ -262,6 +267,109 @@ python infer.py \
 
 Use `scripts/pbs/infer_dialogue.sh` to submit the same job on an `rt_QG` (single
 GPU) PBS queue.
+
+## DialogueSidon2 — direct-readout dialogue separation
+
+DialogueSidon2 jointly separates and restores degraded monaural recordings of
+two-speaker conversations. It keeps DialogueSidon's latent space idea, an
+SSL-VAE over w2v-BERT 2.0 features, but predicts both speakers' latents
+directly: there is no diffusion head and no sampling, so the same input always
+gives the same output, in a single forward pass.
+
+- Pretrained model (CC BY-NC 4.0): [sarulab-speech/DialogueSidon2](https://huggingface.co/sarulab-speech/DialogueSidon2)
+- Demo: [sarulab-speech/DialogueSidon2-demo](https://huggingface.co/spaces/sarulab-speech/DialogueSidon2-demo)
+
+### Architecture
+
+- **Conditioner** — `facebook/w2v-bert-2.0` truncated to 13 layers and fully
+  fine-tuned, reading the noisy mixture.
+- **Readout head** — Linear(1024→768), then an MLP (768→768, GELU, 768→64) that
+  gives both speakers' 32-dimensional latents per frame. It is trained with a
+  permutation-invariant MSE against the standardized latents of the two clean
+  tracks.
+- **SSL-VAE** (stage 1) — DialogueSidon's architecture: a frozen 8-layer
+  w2v-BERT 2.0, a KL bottleneck to 32 dimensions and a DAC decoder at 24 kHz,
+  trained with mel, adversarial and feature-matching losses on Sidon's
+  single-speaker training data. Its encoder provides the training targets, and
+  its decoder renders the predicted latents.
+- **Long inputs** — the model is trained on 30 s segments. Longer recordings
+  are separated in 30 s windows with 5 s of overlap; each window's speakers are
+  aligned to the previous window by the correlation of the outputs in the
+  overlap, and the windows are cross-faded.
+
+### Code layout
+
+- `src/sidon/model/dialoguesidon2/` — the SSL-VAE (`vae.py`), the readout head
+  (`readout.py`) and the Lightning modules of both stages (`lightning_module.py`).
+- `src/sidon/dialoguesidon2/` — features, data modules, the Hydra training entry
+  (`train.py`), latent statistics, inference (`infer.py`), release packaging
+  (`release.py`) and `torch.export` (`export.py`).
+- `config/dialoguesidon2.yaml` and `config/{model,data,train}/dialoguesidon2*.yaml`
+  — the settings of the released model.
+- `scripts/dialoguesidon2/` — launch scripts for each step.
+- `scripts/dialoguesidon2/data/` — the pipelines that produced the training
+  data; see [its README](scripts/dialoguesidon2/data/README.md).
+- `spaces/dialoguesidon2/` — the Gradio demo and its standalone inference
+  (`ds2_infer.py`, which needs only `torch` and `torchaudio`).
+
+### Training
+
+1. **Data** — two-speaker dialogue shards (clean per-speaker tracks and a
+   degraded mixture, 120 s records at 24 kHz). The released model used four
+   roots: telephone conversations (CallHome, Fisher), OpenYap-1k, Basis
+   Conversations 1500 and simulated LibriTTS-R conversations. The recipes and
+   the shard format are in `scripts/dialoguesidon2/data/README.md`.
+2. **Stage 1: SSL-VAE** on Sidon's single-speaker training shards (written by
+   `python -m sidon.preprocess`, see [Generating preprocessed shards](#generating-preprocessed-shards);
+   `data=dialoguesidon2_ssl_vae` pairs two utterances into a two-track example):
+
+   ```bash
+   TRAIN_URLS=/data/sidon/train VAL_URLS=/data/sidon/valid OUTPUT_DIR=runs/ssl_vae \
+     bash scripts/dialoguesidon2/train_ssl_vae.sh
+   ```
+
+3. **Latent statistics** of the stage 1 posterior on dialogue segments:
+
+   ```bash
+   VAE_CHECKPOINT=runs/ssl_vae/.../final.ckpt TRAIN_URLS=/data/dialogue/train \
+   OUTPUT=runs/latent_statistics.pt bash scripts/dialoguesidon2/latent_statistics.sh
+   ```
+
+4. **Stage 2: separation model** (the released model: 2 nodes × 8 GPUs,
+   16 segments of 30 s per GPU, 200k steps):
+
+   ```bash
+   VAE_CHECKPOINT=runs/ssl_vae/.../final.ckpt STATISTICS=runs/latent_statistics.pt \
+   TRAIN_URLS=/data/dialogue/train VAL_URLS=/data/dialogue/valid OUTPUT_DIR=runs/separator \
+     bash scripts/dialoguesidon2/train_separator.sh
+   ```
+
+5. **Release and export** — the release checkpoint (`model.safetensors` and
+   `config.json`) and the `torch.export` programs the demo loads:
+
+   ```bash
+   CHECKPOINT=runs/separator/.../final.ckpt OUTPUT_DIR=release bash scripts/dialoguesidon2/export.sh
+   ```
+
+### Inference
+
+```bash
+# A release directory (e.g. a download of sarulab-speech/DialogueSidon2) or a training checkpoint
+python -m sidon.dialoguesidon2.infer --model ./release --output-dir ./out dialogue1.wav dialogue2.wav
+```
+
+Each input gives `<name>_speaker1.wav` and `<name>_speaker2.wav` at 24 kHz; the
+order of the two speakers is arbitrary. Without the repository, `spaces/dialoguesidon2/ds2_infer.py`
+runs the exported programs with `torch` and `torchaudio` only (see the model
+card).
+
+### Tests
+
+```bash
+PYTHONPATH=src python -m unittest discover -s tests -p 'test_dialoguesidon2*.py'
+```
+
+The tests run on CPU with tiny random models and synthetic data.
 
 ## Validation and troubleshooting
 
