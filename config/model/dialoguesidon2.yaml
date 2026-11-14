@@ -1,0 +1,35 @@
+# Stage 2: the separation model (sidon.model.dialoguesidon2.lightning_module.DialogueSidon2).
+# w2v-BERT 2.0 truncated to 13 layers, fully fine-tuned, reads the noisy mixture; a readout head predicts both
+# speakers' standardized SSL-VAE latents, trained with a permutation-invariant MSE.
+lightning_module:
+  _target_: sidon.model.dialoguesidon2.lightning_module.DialogueSidon2
+  _recursive_: false
+
+cfg:
+  vae_checkpoint: ???  # stage 1 checkpoint (SSLVAEModule final.ckpt); its weights stay frozen
+  statistics_path: ???  # latent statistics of that checkpoint (sidon.dialoguesidon2.statistics)
+  sample_posterior: true  # targets are posterior draws (false: posterior means)
+  conditioner:
+    name: facebook/w2v-bert-2.0
+    layers: 13
+    gradient_checkpointing: false
+  readout:
+    hidden: 768
+  efficient_ssl_attention: true
+  performance:
+    compile_ssl: true  # torch.compile of each w2v-BERT layer
+    flex_ssl_attention: true  # FlexAttention for the frozen VAE encoder when compiled
+  loss:
+    assignment_weight: 1.0
+  optim:
+    fused: true
+    lr: 1.0e-4  # readout head
+    conditioner_lr: 2.0e-5  # w2v-BERT conditioner
+    betas: [0.9, 0.95]
+    weight_decay: 0.0
+    warmup_steps: 2000  # linear warmup, then constant
+    cooldown_start: 160000  # linear decay from here to min_lr_ratio at max_steps
+    min_lr_ratio: 0.0
+    max_steps: ${train.trainer.max_steps}
+    max_grad_norm: 1.0  # gradient clipping (total norm)
+    skip_grad_norm: null  # skip updates above this norm; null skips only non-finite updates
