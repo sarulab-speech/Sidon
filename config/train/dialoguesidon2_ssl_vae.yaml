@@ -1,0 +1,26 @@
+# Stage 1 trainer: 8 GPUs, 4 two-track examples per GPU, bf16 mixed precision. max_steps counts optimizer steps:
+# two per batch (discriminator, then generator), so 510k steps are 255k batches.
+defaults:
+  - dialoguesidon2
+  - _self_
+
+callbacks:
+  - _target_: sidon.dialoguesidon2.audio_logging.ValidationAudio
+    max_batches: 1
+  - _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    save_last: true
+    save_top_k: 1
+    monitor: val/loss
+    mode: min
+  - _target_: lightning.pytorch.callbacks.LearningRateMonitor
+    logging_interval: step
+
+trainer:
+  devices: 8
+  num_nodes: 1
+  # Manual optimization with two backward passes per step: DDP's static graph must stay off.
+  strategy:
+    _target_: lightning.pytorch.strategies.DDPStrategy
+    static_graph: false
+  max_steps: 510000
+  log_every_n_steps: 100

@@ -1,0 +1,29 @@
+# Producer of the DialogueSidon2 training shards (scripts/dialoguesidon2/data/producer; see the README there).
+# Use with config/preprocess.yaml:
+#   python scripts/dialoguesidon2/data/producer/produce.py data=dialoguesidon2_producer \
+#     "data.datamodule.train_wds_patterns=[<source>/train]" "data.datamodule.val_wds_patterns=[<source>/dev]" \
+#     "data.datamodule.noise_path=[<noise shards>]" data.datamodule.shard_idx=<0..15> \
+#     preprocess.output_root=<output root> preprocess.writer_name=<name>
+# The values below are those that produced the released shards; only the three paths must be set.
+datamodule:
+  _target_: producer.datamodule.DialogueProducerDataModule
+  train_wds_patterns: ???  # directories of source tars (records: `flac` = stereo 48 kHz, one speaker per channel)
+  val_wds_patterns: ???
+  noise_path: ???  # directories of WebDataset noise shards (members whose extension contains "audio", e.g. x.audio.wav)
+  batch_size: 1
+  sampling_rate: 24000
+  ssl_model_name: facebook/w2v-bert-2.0
+  speaker_ssl_model_name: microsoft/wavlm-base-plus-sv
+  use_noise: true
+  max_duration: 120.0
+  merge_samples: true
+  train_num_workers: 8
+  val_num_workers: 1
+  use_pra: true
+  n_repeats: 1
+  split_by_worker: true
+  n_shards: 16
+  shard_idx: 0
+  rt60_min: 0.1
+  rt60_max: 1.0
+  degradations: legacy  # legacy: as the released data was made; upstream: with the later packet-loss/length fixes

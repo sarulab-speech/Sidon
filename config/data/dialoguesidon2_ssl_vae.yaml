@@ -1,0 +1,12 @@
+# Stage 1 data: Sidon's single-speaker preprocessed shards (sidon.dialoguesidon2.sidon_tracks). Each clean track
+# is resampled to 24 kHz and cut into 10 s segments; two segments of different utterances form one example.
+datamodule:
+  _target_: sidon.dialoguesidon2.sidon_tracks.SidonTrackDataModule
+  train_urls: ???  # list of shard directories or .tar files
+  val_urls: ???
+  batch_size: 4  # two-track examples per GPU (the released model: 8 GPUs)
+  val_batch_size: null
+  num_workers: 8
+  segment_seconds: 10
+  data_seed: sidon-vae
+  expected_train_shards: null

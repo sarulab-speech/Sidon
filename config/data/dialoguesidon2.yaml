@@ -1,0 +1,11 @@
+# Stage 2 data: two-speaker dialogue shards (sidon.dialoguesidon2.data), each record cut into 30 s segments.
+datamodule:
+  _target_: sidon.dialoguesidon2.data.DialogueDataModule
+  train_urls: ???  # list of shard directories or .tar files
+  val_urls: ???
+  batch_size: 16  # segments per GPU (the released model: 16 GPUs, 256 segments per step)
+  val_batch_size: null  # null: batch_size
+  num_workers: 8
+  segment_seconds: 30
+  # Runs with one data_seed read the training data in the same order; null draws a new order per launch.
+  data_seed: paper-s1

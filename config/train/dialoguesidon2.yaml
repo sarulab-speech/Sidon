@@ -1,0 +1,47 @@
+# Stage 2 trainer: 200k steps of 16 segments per GPU on 2 nodes x 8 GPUs, bf16 mixed precision.
+logger:
+  _target_: lightning.pytorch.loggers.CSVLogger
+  save_dir: runs/dialoguesidon2
+  name: ${hydra:runtime.choices.model}
+
+# Weights & Biases (off by default): enabled, entity, project, name.
+wandb:
+  enabled: false
+  entity: null
+  project: dialoguesidon2
+
+callbacks:
+  - _target_: sidon.dialoguesidon2.audio_logging.ValidationAudio
+    max_batches: 1
+  - _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    save_last: true
+    save_top_k: 1
+    monitor: val/loss
+    mode: min
+  - _target_: lightning.pytorch.callbacks.LearningRateMonitor
+    logging_interval: step
+  - _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    every_n_train_steps: 5000
+    save_top_k: 4
+    monitor: step
+    mode: max
+    save_last: false
+    filename: "periodic-{step:06d}"
+
+trainer:
+  accelerator: gpu
+  devices: 8
+  num_nodes: 2
+  strategy: ddp
+  precision: bf16-mixed
+  max_steps: 200000
+  val_check_interval: 1000
+  check_val_every_n_epoch: null
+  limit_val_batches: 10
+  num_sanity_val_steps: 0
+  log_every_n_steps: 10
+  gradient_clip_val: null  # clipping is done by the model (optim.max_grad_norm)
+  use_distributed_sampler: false  # the data module splits shards by rank
+
+ckpt_path: null  # resume from this checkpoint
+reset_time_on_resume: false  # true: trainer.max_time applies per job (resumed runs on a time-limited scheduler)
